@@ -1,12 +1,12 @@
 export default async function HealthPage() {
   const api = process.env.NEXT_PUBLIC_API_URL!;
   let status = "unknown";
-  let body: any = null;
+  let body: unknown = null;
   try {
     const res = await fetch(`${api}/health`, { cache: "no-store" });
     status = `${res.status} ${res.statusText}`;
     body = await res.json().catch(() => null);
-  } catch (e: any) {
+  } catch (_e: unknown) {
     status = `network error`;
   }
 
