@@ -13,6 +13,7 @@ type Item = {
   listings_count?: number | null;
 };
 
+
 function formatPrice(cents: number | null, currency = "USD") {
   if (cents == null) return "—";
   return new Intl.NumberFormat("en-US", {
