@@ -24,6 +24,7 @@ function formatPrice(cents: number | null, currency = "USD") {
   }).format(cents / 100);
 }
 
+
 export default function SearchClient() {
   const [q, setQ] = useState<string>("levis");
   const [items, setItems] = useState<Item[]>([]);
@@ -49,6 +50,7 @@ export default function SearchClient() {
       setLoading(false);
     }
   }
+  
 
   useEffect(() => {
     runSearch(q);
