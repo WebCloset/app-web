@@ -7,34 +7,35 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
-  if (
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
-  ) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const id = params.id;
+  const rows = await sql`
+    SELECT ic.id, ic.brand, ic.title, ic.category, ic.image_url,
+           l.id AS link_id, s.price_cents, s.currency, s.seller_url, s.marketplace_code
+    FROM item_canonical ic
+    JOIN item_links l ON l.canonical_id = ic.id AND l.active
+    JOIN item_source s ON s.id = l.source_id
+    WHERE ic.id = ${id}
+  `;
+
+  if (rows.length === 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  try {
-    const item = await sql`
-      SELECT id, brand, title, category, image_url, min_price_cents, first_seen, last_seen
-      FROM item_canonical
-      WHERE id = ${id}::uuid
-      LIMIT 1
-    `;
-    if (item.length === 0) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    const offers = await sql`
-      SELECT s.id, s.marketplace_code, s.condition, s.price_cents, s.currency,
-             s.image_url, s.seller_url
-      FROM item_links l
-      JOIN item_source s ON s.id = l.source_id
-      WHERE l.canonical_id = ${id}::uuid AND l.active
-      ORDER BY s.price_cents ASC
-    `;
-    return NextResponse.json({ item: item[0], offers });
-  } catch (e) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
+  const item = {
+    id: rows[0].id,
+    brand: rows[0].brand,
+    title: rows[0].title,
+    category: rows[0].category,
+    image_url: rows[0].image_url,
+  };
+
+  const offers = rows.map((r: any) => ({
+    link_id: r.link_id,
+    price_cents: r.price_cents,
+    currency: r.currency,
+    seller_url: r.seller_url,
+    marketplace: r.marketplace_code,
+  }));
+
+  return NextResponse.json({ item, offers });
 }
-
