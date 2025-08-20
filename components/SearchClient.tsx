@@ -18,7 +18,7 @@ function formatPrice(cents: number | null, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(cents / 100);
 }
 
@@ -33,7 +33,7 @@ export default function SearchClient() {
     setError(null);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
-        cache: "no-store"
+        cache: "no-store",
       });
       if (!res.ok) {
         throw new Error(`Search failed (${res.status})`);
@@ -77,9 +77,7 @@ export default function SearchClient() {
         </button>
       </form>
 
-      {error && (
-        <div className="mb-4 text-red-600 text-sm">Error: {error}</div>
-      )}
+      {error && <div className="mb-4 text-red-600 text-sm">Error: {error}</div>}
 
       {!loading && items.length === 0 && !error && (
         <div className="text-gray-500">No results.</div>
@@ -94,15 +92,12 @@ export default function SearchClient() {
                 alt={it.title ?? "Item"}
                 className="w-full h-48 object-cover rounded-lg mb-2"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = "/placeholder.svg";
+                  (e.currentTarget as HTMLImageElement).src =
+                    "/placeholder.svg";
                 }}
               />
-              <div className="text-sm text-gray-500">
-                {it.brand ?? "—"}
-              </div>
-              <div className="text-sm line-clamp-2">
-                {it.title ?? "Untitled"}
-              </div>
+              <div className="text-sm text-gray-500">{it.brand ?? "—"}</div>
+              <div className="text-sm line-clamp-2">{it.title ?? "Untitled"}</div>
               <div className="mt-1 font-semibold">
                 {formatPrice(it.price_cents)}
               </div>
