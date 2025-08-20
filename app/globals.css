@@ -1,2 +1,5 @@
-/* global styles */
-html,body{height:100%}
+@import "tailwindcss";
+
+:root { color-scheme: light dark; }
+html, body { height: 100%; }
+body { margin: 0; }
