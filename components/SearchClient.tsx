@@ -10,6 +10,7 @@ type Item = {
   category: string | null;
   image_url: string | null;
   price_cents: number | null;
+  
   listings_count?: number | null;
 };
 
