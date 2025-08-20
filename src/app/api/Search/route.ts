@@ -1,44 +1,44 @@
-// app/api/search/route.ts
 import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
+import { sql } from "../../../lib/db";
 
 export const runtime = "edge";
-export const dynamic = "force-dynamic";
 
-type ItemRow = {
+type Row = {
   id: string;
   brand: string | null;
   title: string | null;
   category: string | null;
   image_url: string | null;
-  min_price_cents: number | null;
+  price_cents: number | null;
+  listings_count: number | null;
 };
 
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const raw = (searchParams.get("q") || "").trim();
-    const q = raw.slice(0, 80); // basic guard
+  const { searchParams } = new URL(req.url);
+  const q = (searchParams.get("q") || "").trim();
+  const like = `%${q}%`;
 
-    if (!q) {
-      return NextResponse.json({ items: [] }, { status: 200 });
-    }
+  const rows = await sql<Row>`
+    SELECT
+      ic.id,
+      ic.brand,
+      ic.title,
+      ic.category,
+      ic.image_url,
+      MIN(s.price_cents) AS price_cents,
+      COUNT(s.*)        AS listings_count
+    FROM item_canonical ic
+    JOIN item_links   l ON l.canonical_id = ic.id AND l.active
+    JOIN item_source  s ON s.id = l.source_id
+    WHERE ${q === "" ? sql`TRUE` : sql`
+      ic.title    ILIKE ${like}
+      OR ic.brand ILIKE ${like}
+      OR ic.category ILIKE ${like}
+    `}
+    GROUP BY ic.id
+    ORDER BY price_cents NULLS LAST, ic.id DESC
+    LIMIT 24
+  `;
 
-    const like = `%${q}%`;
-
-    const items = await sql<ItemRow[]>`
-      SELECT id, brand, title, category, image_url, min_price_cents
-      FROM item_canonical
-      WHERE brand ILIKE ${like}
-         OR title ILIKE ${like}
-         OR category ILIKE ${like}
-      ORDER BY last_seen DESC NULLS LAST
-      LIMIT 24
-    `;
-
-    return NextResponse.json({ items }, { status: 200 });
-  } catch (err) {
-    console.error("search error", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
+  return NextResponse.json({ items: rows }, { status: 200 });
 }
