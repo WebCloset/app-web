@@ -1,65 +1,49 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 type Item = {
   id: string;
   brand: string | null;
   title: string | null;
+  category: string | null;
   image_url: string | null;
   price_cents: number | null;
   listings_count: number | null;
 };
 
-function formatPrice(cents: number | null) {
-  if (cents == null) return "";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
-
 export default function SearchClient() {
-  const [q, setQ] = useState<string>("levis");
+  const [query, setQuery] = useState("levis");
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  async function run(query: string) {
+  async function run(q: string) {
     setLoading(true);
-    setError(null);
+    setError("");
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      setItems(data.items ?? []);
-    } catch (e: any) {
-      setError(e?.message ?? "Search failed");
-      setItems([]);
+      setItems(data.items || []);
+    } catch {
+      setError("Search failed");
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    run(q);
-  }, []); // initial load
+  useEffect(() => { run(query); }, []);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-6">
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(q);
-        }}
-        className="flex gap-2 mb-6"
+        onSubmit={(e) => { e.preventDefault(); run(query); }}
+        className="flex gap-2 mb-8"
       >
         <input
           type="text"
           placeholder="Search items…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           className="flex-1 border rounded px-3 py-2"
         />
         <button type="submit" disabled={loading} className="border rounded px-4 py-2">
@@ -79,7 +63,9 @@ export default function SearchClient() {
             />
             <div className="text-sm text-gray-600">{it.brand}</div>
             <div className="font-semibold">{it.title}</div>
-            <div className="text-sm">{formatPrice(it.price_cents)}</div>
+            <div className="text-xs text-gray-500">
+              {it.price_cents != null ? `$${(it.price_cents / 100).toFixed(2)}` : ""}
+            </div>
             <div className="text-xs text-gray-500">{it.listings_count ?? 0} listings</div>
           </a>
         ))}
