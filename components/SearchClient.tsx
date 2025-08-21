@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 type Item = {
   id: string;
@@ -13,76 +12,84 @@ type Item = {
   listings_count: number | null;
 };
 
-function fmt(cents: number | null) {
+
+
+function formatPrice(cents: number | null) {
   if (cents == null) return "";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
+    cents / 100
+  );
 }
 
 export default function SearchClient() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("levis");
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [err, setErr] = useState<string | null>(null);
 
-  async function run(q?: string) {
+  async function run(q: string) {
     setLoading(true);
-    setError("");
+    setErr(null);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q ?? query)}`, { cache: "no-store" });
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { cache: "no-store" });
       const data = await res.json();
-      setItems(data.items || []);
-    } catch {
-      setError("Search failed");
+      setItems(data.items ?? []);
+    } catch (e: any) {
+      setErr(e?.message ?? "Search failed");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    run("levis");
+    run(query);
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          run();
+          run(query);
         }}
-        className="flex gap-2 mb-8"
+        style={{ display: "flex", gap: 8, marginBottom: 16 }}
       >
         <input
           type="text"
-          placeholder="Search items..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 border rounded px-3 py-2"
+          placeholder="Search items…"
+          style={{ flex: 1, padding: 10, border: "1px solid #ccc", borderRadius: 8 }}
         />
-        <button type="submit" disabled={loading} className="border rounded px-4 py-2">
-          {loading ? "Searching..." : "Search"}
+        <button type="submit" disabled={loading} style={{ padding: "10px 14px", borderRadius: 8 }}>
+          {loading ? "Searching…" : "Search"}
         </button>
       </form>
 
-      {error && <div className="text-red-600 mb-4">{error}</div>}
+      {err && <div style={{ color: "#c00", marginBottom: 16 }}>{err}</div>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))"
+        }}
+      >
         {items.map((it) => (
-          <Link key={it.id} href={`/item/${it.id}`} className="border rounded p-4 hover:shadow">
-            <img
-              src={it.image_url || "/placeholder.svg"}
-              alt={it.title || ""}
-              className="w-full h-40 object-cover mb-3"
-            />
-            <div className="text-sm text-gray-600">{it.brand || ""}</div>
-            <div className="font-semibold">{it.title || ""}</div>
-            <div className="text-xs text-gray-500">
-              {fmt(it.price_cents)} · {it.listings_count ?? 0} listings
+          <a key={it.id} href={`/item/${it.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
+              <img
+                src={it.image_url || "/placeholder.svg"}
+                alt={it.title || ""}
+                style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 8, background: "#f6f6f6" }}
+              />
+              <div style={{ marginTop: 8, fontSize: 14, color: "#666" }}>{it.brand || ""}</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>{it.title || ""}</div>
+              <div style={{ fontSize: 13, color: "#555" }}>
+                {formatPrice(it.price_cents)} • {it.listings_count ?? 0} listings
+              </div>
             </div>
-          </Link>
+          </a>
         ))}
       </div>
     </div>
