@@ -1,6 +1,5 @@
 import { neon } from "@neondatabase/serverless";
 
-const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL is not set");
-
-export const sql = neon(url);
+// Vercel injects env vars; ensure DATABASE_URL is set there.
+const conn = process.env.DATABASE_URL!;
+export const sql = neon(conn);

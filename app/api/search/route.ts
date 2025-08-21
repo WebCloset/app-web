@@ -1,64 +1,65 @@
 import { NextResponse } from "next/server";
-import { sql, type Row } from "@/lib/db";
+import { sql } from "@/lib/db";
 
 export const runtime = "edge";
 
+type Row = {
+  id: number;
+  brand: string;
+  title: string;
+  category: string | null;
+  image_url: string | null;
+  price_cents: number | null;
+  listings_count: number;
+};
+
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") ?? "").trim();
+  const url = new URL(req.url);
+  const q = (url.searchParams.get("q") ?? "").trim();
+  const like = `%${q}%`;
 
-    let rowsAny: unknown[];
+  let rows: Row[];
 
-    if (q === "") {
-      // No filter: show recent/popular (no WHERE with params)
-      rowsAny = await sql`
-        SELECT
-          ic.id,
-          ic.brand,
-          ic.title,
-          ic.category,
-          ic.image_url,
-          MIN(l.price_cents)    AS price_cents,
-          COUNT(l.*)            AS listings_count
-        FROM item_canonical ic
-        JOIN item_links l ON l.canonical_id = ic.id AND l.active
-        GROUP BY ic.id
-        ORDER BY price_cents NULLS LAST, ic.id DESC
-        LIMIT 24;
-      `;
-    } else {
-      // Filtered by q across title/brand/category using the same param
-      const like = `%${q}%`;
-      rowsAny = await sql`
-        SELECT
-          ic.id,
-          ic.brand,
-          ic.title,
-          ic.category,
-          ic.image_url,
-          MIN(l.price_cents)    AS price_cents,
-          COUNT(l.*)            AS listings_count
-        FROM item_canonical ic
-        JOIN item_links l ON l.canonical_id = ic.id AND l.active
-        WHERE
-             ic.title    ILIKE ${like}
-          OR ic.brand    ILIKE ${like}
-          OR ic.category ILIKE ${like}
-        GROUP BY ic.id
-        ORDER BY price_cents NULLS LAST, ic.id DESC
-        LIMIT 24;
-      `;
-    }
-
-    // Cast once (avoid generic type arg on the template literal)
-    const rows = rowsAny as Row[];
-
-    return NextResponse.json({ items: rows }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: "search_failed", message: err?.message ?? "Unknown error" },
-      { status: 500 }
-    );
+  if (q === "") {
+    // No search term: show recent/popular items
+    rows = await sql<Row>`
+      SELECT
+        ic.id,
+        ic.brand,
+        ic.title,
+        ic.category,
+        ic.image_url,
+        MIN(s.price_cents) AS price_cents,
+        COUNT(s.*)        AS listings_count
+      FROM item_canonical ic
+      JOIN item_links   l ON l.canonical_id = ic.id AND l.active
+      JOIN item_source  s ON s.id = l.source_id
+      GROUP BY ic.id
+      ORDER BY price_cents NULLS LAST, ic.id DESC
+      LIMIT 24;
+    `;
+  } else {
+    // Search across title / brand / category
+    rows = await sql<Row>`
+      SELECT
+        ic.id,
+        ic.brand,
+        ic.title,
+        ic.category,
+        ic.image_url,
+        MIN(s.price_cents) AS price_cents,
+        COUNT(s.*)        AS listings_count
+      FROM item_canonical ic
+      JOIN item_links   l ON l.canonical_id = ic.id AND l.active
+      JOIN item_source  s ON s.id = l.source_id
+      WHERE ic.title    ILIKE ${like}
+         OR ic.brand    ILIKE ${like}
+         OR ic.category ILIKE ${like}
+      GROUP BY ic.id
+      ORDER BY price_cents NULLS LAST, ic.id DESC
+      LIMIT 24;
+    `;
   }
+
+  return NextResponse.json({ items: rows }, { status: 200 });
 }
