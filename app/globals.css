@@ -3,4 +3,5 @@
 @tailwind utilities;
 
 :root { color-scheme: light dark; }
-body { min-height: 100dvh; }
+html, body { height: 100%; }
+body { margin: 0; }
