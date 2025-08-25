@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* your custom styles (optional) */
 :root { color-scheme: light dark; }
 html, body { height: 100%; }
 body { margin: 0; }
