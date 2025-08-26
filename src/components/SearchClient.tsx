@@ -9,11 +9,20 @@ export default function SearchClient() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
+    if (!query.trim()) return; // block empty searches
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: query.trim(), page: 1, per_page: 20 }),
+      });
+      if (!res.ok) throw new Error(`Search failed: ${res.status}`);
       const data = await res.json();
       setItems(data.items || []);
+    } catch (err) {
+      console.error(err);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -26,6 +35,7 @@ export default function SearchClient() {
         <input
           type="text"
           placeholder="Search items..."
+          aria-label="Search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="flex-1 border rounded p-2"
@@ -43,17 +53,16 @@ export default function SearchClient() {
         {items.map((item) => (
           <a
             key={item.id}
-            href={`/item/${item.id}`}
+            href={`${process.env.NEXT_PUBLIC_API_URL}/click?id=${encodeURIComponent(item.id)}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="border rounded-lg p-4 hover:shadow transition cursor-pointer block"
           >
             <img
-              src={item.image_url || "/placeholder.svg"}
+              src={item.image_url || "/placeholder.webp"}
               alt={item.title || "Item"}
               className="w-full h-48 object-cover rounded mb-2"
-              onError={(e) =>
-                ((e.currentTarget as HTMLImageElement).src =
-                  "/placeholder.svg")
-              }
+              onError={(e) => ((e.currentTarget as HTMLImageElement).src = "/placeholder.webp")}
             />
             <div className="font-semibold">
               {item.brand ? `${item.brand} — ` : ""}
