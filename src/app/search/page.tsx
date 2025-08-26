@@ -1,5 +1,7 @@
 import SafeImg from '@/components/SafeImg';
 
+export const dynamic = "force-dynamic";
+
 // app-web/src/app/search/page.tsx
 type Item = {
   id: string;
@@ -25,29 +27,47 @@ export default async function SearchPage({
   if (!api) {
     return <main className="p-6">API not configured.</main>;
   }
-  const q = typeof params.q === "string" ? params.q : undefined;
+  const rawQ = typeof params.q === "string" ? params.q : undefined;
+  const q = rawQ?.trim() || undefined;
 
   const body = {
     q,
     page: 1,
     per_page: 24,
     sort: "best",
-  };
+  } as const;
 
-  console.log("API URL:", api);
-  const res = await fetch(`${api}/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-    body: JSON.stringify(body),
-  });
+  let data: { items: Item[]; total: number } = { items: [], total: 0 };
+  try {
+    const res = await fetch(`${api}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      next: { revalidate: 0 },
+      body: JSON.stringify(body),
+    });
 
-  if (!res.ok) {
-    return <main className="p-6">Search error.</main>;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      return (
+        <main className="p-6">
+          <div className="text-red-600 font-medium">Search error ({res.status}).</div>
+          <pre className="mt-2 whitespace-pre-wrap text-xs opacity-80">{text || "No error body returned."}</pre>
+        </main>
+      );
+    }
+
+    data = (await res.json()) as { items: Item[]; total: number };
+  } catch (err: any) {
+    return (
+      <main className="p-6">
+        <div className="text-red-600 font-medium">Search request failed.</div>
+        <pre className="mt-2 whitespace-pre-wrap text-xs opacity-80">{String(err)}</pre>
+      </main>
+    );
   }
 
-  const data = await res.json() as { items: Item[]; total: number };
-  const items = data.items || [];
+  const items = Array.isArray(data.items) ? data.items : [];
 
   return (
     <main className="p-4 max-w-6xl mx-auto">
