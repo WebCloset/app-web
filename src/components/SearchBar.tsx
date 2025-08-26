@@ -8,7 +8,7 @@ export default function SearchBar({ initial = "" }: { initial?: string }) {
   const router = useRouter();
 
   return (
-    <form
+    <form action="/search" method="GET"
       onSubmit={(e) => {
         e.preventDefault();
         const query = q.trim();
@@ -19,6 +19,7 @@ export default function SearchBar({ initial = "" }: { initial?: string }) {
     >
       <input
         type="text"
+        name="q"
         aria-label="Search"
         autoComplete="off"
         value={q}
