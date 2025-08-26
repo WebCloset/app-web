@@ -9,7 +9,8 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "incremental": true,
-    "paths": { "@/*": ["./*"] },
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
     "plugins": [{ "name": "next" }]
   },
   "include": [".next/types/**/*.ts", "**/*.ts", "**/*.tsx"]
