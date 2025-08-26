@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SearchBar from '@/components/SearchBar';
 
 export default function Home() {
   return (
@@ -35,6 +36,10 @@ export default function Home() {
               WebCloset aggregates listings so you can compare styles and prices in one place.
               Start with a quick search, then open any result via our safe redirect.
             </p>
+
+            <div className="mt-6 max-w-xl">
+              <SearchBar />
+            </div>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
