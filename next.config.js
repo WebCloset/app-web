@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+/ ** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
     const csp = [
@@ -15,6 +15,7 @@ const nextConfig = {
       },
     ];
   },
+  images: { domains: ['i.ebayimg.com', 'img.ebayimg.com'], formats: ['image/avif', 'image/webp'] },
 };
 
 export default nextConfig;
