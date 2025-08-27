@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "../src/app/globals.css";
+import { Inter, Roboto_Mono } from "next/font/google";
+import "../app/globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const fontSans = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const fontMono = Roboto_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -20,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} antialiased`}
+        className={`${fontSans.variable} ${fontMono.variable} antialiased`}
       >
         {children}
       </body>
