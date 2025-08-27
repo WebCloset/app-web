@@ -10,6 +10,9 @@ export default function Home() {
             WebCloset
           </Link>
           <nav className="hidden sm:flex gap-6 text-sm">
+            <Link href="/browse" className="hover:underline">
+              Browse
+            </Link>
             <Link href="/search?q=dress" className="hover:underline">
               Search
             </Link>
