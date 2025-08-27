@@ -3,19 +3,16 @@ import SearchBar from "@/components/SearchBar";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background/50 backdrop-blur">
+    <main className="min-h-dvh bg-gradient-to-b from-white to-slate-50 flex flex-col">
+      {/* Header */}
+      <header className="border-b bg-white/70 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold tracking-tight">
             WebCloset
           </Link>
           <nav className="hidden sm:flex gap-6 text-sm">
-            <Link href="/browse" className="hover:underline">
-              Browse
-            </Link>
-            <Link href="/search?q=dress" className="hover:underline">
-              Search
-            </Link>
+            <Link href="/browse" className="hover:underline">Browse</Link>
+            <Link href="/search?q=dress" className="hover:underline">Search</Link>
             <a
               href="https://github.com/WebCloset"
               target="_blank"
@@ -28,87 +25,61 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex-1">
-        {/* Hero */}
-        <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              Search secondhand fashion across marketplaces.
-            </h1>
-            <p className="mt-4 text-base sm:text-lg text-foreground/80">
-              WebCloset aggregates listings so you can compare styles and prices in one place.
-              Start with a quick search, then open any result via our safe redirect.
-            </p>
+      {/* Hero */}
+      <section className="mx-auto max-w-5xl px-6 py-16 md:py-24 text-center">
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+          Find better second‑hand fashion
+        </h1>
+        <p className="mt-3 text-slate-600">
+          Search across marketplaces. Clean results. One click to buy.
+        </p>
+        <div className="mt-8 mx-auto max-w-2xl">
+          <SearchBar />
+        </div>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <Link href="/search?q=levi" className="px-3 py-1.5 text-sm rounded-full border hover:bg-slate-100">
+            Levi’s 501
+          </Link>
+          <Link href="/search?q=linen+dress" className="px-3 py-1.5 text-sm rounded-full border hover:bg-slate-100">
+            Linen dress
+          </Link>
+          <Link href="/search?q=arc%27teryx+jacket" className="px-3 py-1.5 text-sm rounded-full border hover:bg-slate-100">
+            Arc’teryx jacket
+          </Link>
+          <Link href="/search?q=gucci+loafers" className="px-3 py-1.5 text-sm rounded-full border hover:bg-slate-100">
+            Gucci loafers
+          </Link>
+        </div>
+      </section>
 
-            <div className="mt-6 max-w-xl">
-              <SearchBar />
-            </div>
+      {/* Value cards */}
+      <section className="mx-auto max-w-6xl px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-20">
+        <div className="rounded-2xl border p-5 shadow-sm">
+          <h3 className="font-medium">Smart search</h3>
+          <p className="text-sm text-slate-600 mt-1">
+            Try phrases like “black silk midi dress under $150 size 6”.
+          </p>
+        </div>
+        <div className="rounded-2xl border p-5 shadow-sm">
+          <h3 className="font-medium">De‑duped results</h3>
+          <p className="text-sm text-slate-600 mt-1">Cleaner listings, fewer repeats.</p>
+        </div>
+        <div className="rounded-2xl border p-5 shadow-sm">
+          <h3 className="font-medium">Fast filters</h3>
+          <p className="text-sm text-slate-600 mt-1">Price, condition, size, marketplace.</p>
+        </div>
+        <div className="rounded-2xl border p-5 shadow-sm">
+          <h3 className="font-medium">One‑click out</h3>
+          <p className="text-sm text-slate-600 mt-1">Open seller pages via secure redirect.</p>
+        </div>
+      </section>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/search?q=black%20midi%20dress"
-                className="inline-flex items-center justify-center rounded-md px-5 py-3 text-sm font-medium bg-foreground text-background hover:opacity-90 transition"
-              >
-                Start searching
-              </Link>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-foreground/60">Try:</span>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href="/search?q=Levi%27s%20501"
-                    className="rounded-full px-3 py-1 border border-foreground/20 hover:border-foreground/40"
-                  >
-                    Levi&apos;s 501
-                  </Link>
-                  <Link
-                    href="/search?q=Dr%20Martens%201460"
-                    className="rounded-full px-3 py-1 border border-foreground/20 hover:border-foreground/40"
-                  >
-                    Dr Martens 1460
-                  </Link>
-                  <Link
-                    href="/search?q=Arcteryx%20Beta%20jacket"
-                    className="rounded-full px-3 py-1 border border-foreground/20 hover:border-foreground/40"
-                  >
-                    Arc&apos;teryx Beta jacket
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* How it works */}
-        <section className="mx-auto max-w-6xl px-6 pb-20">
-          <div className="grid sm:grid-cols-3 gap-6">
-            <div className="rounded-lg border p-5">
-              <h3 className="font-semibold">1. Ingest</h3>
-              <p className="mt-2 text-sm text-foreground/70">
-                We collect listings (eBay first) and index them for fast search.
-              </p>
-            </div>
-            <div className="rounded-lg border p-5">
-              <h3 className="font-semibold">2. Search</h3>
-              <p className="mt-2 text-sm text-foreground/70">
-                Use our results page to filter and sort. Prices are normalized to cents.
-              </p>
-            </div>
-            <div className="rounded-lg border p-5">
-              <h3 className="font-semibold">3. Click</h3>
-              <p className="mt-2 text-sm text-foreground/70">
-                Every card opens through <code className="px-1 py-0.5 rounded bg-foreground/10">/click?id=…</code> on our API
-                for safe outbound redirects.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t">
-        <div className="mx-auto max-w-6xl px-6 py-6 text-sm text-foreground/60">
-          © {new Date().getFullYear()} WebCloset • Built with Next.js &amp; FastAPI
+      {/* Footer */}
+      <footer className="border-t bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-slate-500 text-center">
+          Some links are affiliate; we may earn a commission.
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
