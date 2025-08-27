@@ -1,12 +1,12 @@
-import { neon, neonConfig } from "@neondatabase/serverless";
-
-// Neon works great over fetch; make sure we're using it (Node & edge compatible)
-neonConfig.fetchConnectionCache = true;
+import { neon } from "@neondatabase/serverless";
 
 const url = process.env.DATABASE_URL;
-if (!url) {
+if (!url && process.env.NODE_ENV === "production") {
   throw new Error("DATABASE_URL is not set");
 }
+
+// Use a dummy URL during build time if not set
+const dbUrl = url || "postgresql://dummy:dummy@localhost:5432/dummy";
 
 // Generic Row type for convenience
 export type Row = {
@@ -19,4 +19,4 @@ export type Row = {
   listings_count: number;
 };
 
-export const sql = neon<Row>(url);
+export const sql = neon(dbUrl);

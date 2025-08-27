@@ -1,4 +1,4 @@
-import SafeImg from '@/components/SafeImg';
+import SafeImg from '@/src/components/SafeImg';
 
 export const dynamic = "force-dynamic";
 

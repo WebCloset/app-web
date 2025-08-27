@@ -1,4 +1,4 @@
-import SearchClient from "@/components/SearchClient";
+import SearchClient from "@/src/components/SearchClient";
 
 export default function Page() {
   return (

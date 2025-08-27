@@ -1,5 +1,5 @@
 import Link from "next/link";
-import SearchBar from '@/components/SearchBar';
+import SearchBar from '@/src/components/SearchBar';
 
 export default function Home() {
   return (
