@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: /sitemap.xml
+Sitemap: https://webcloset-kyv6u5ps0-selyan-chiccos-projects.vercel.app/sitemap.xml

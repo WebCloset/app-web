@@ -1,10 +1,33 @@
-export const metadata = { title: "WebCloset" };
+import type { Metadata } from "next";
+import { Inter, Roboto_Mono } from "next/font/google";
+import "../app/globals.css";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+const fontSans = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const fontMono = Roboto_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "WebCloset",
+  description: "Search and compare secondhand fashion across marketplaces.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif", margin: 0 }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px" }}>{children}</div>
+      <body
+        className={`${fontSans.variable} ${fontMono.variable} antialiased`}
+      >
+        {children}
       </body>
     </html>
   );
