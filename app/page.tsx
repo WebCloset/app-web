@@ -1,12 +1,9 @@
-import SearchClient from "@/components/SearchClient";
+import SearchClient from "@/src/components/SearchClient";
 
-export default function Page() {
+export default function Home() {
   return (
-    <main className="min-h-dvh p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-4">WebCloset</h1>
-        <SearchClient />
-      </div>
+    <main>
+      <SearchClient />
     </main>
   );
 }
