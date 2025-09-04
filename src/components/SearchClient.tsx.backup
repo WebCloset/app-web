@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
+import SmartSearchBar from "./SearchBar";
 import Filters from "./Filters";
-import SaveSearchModal from "./SaveSearchModal";
-import Toast from "./Toast";
 
 type Item = {
   id: string;
@@ -31,12 +31,10 @@ interface FilterState {
 }
 
 export default function SearchClient() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [currentFilters, setCurrentFilters] = useState<FilterState>({
     q: "",
     brands: [],
@@ -54,8 +52,29 @@ export default function SearchClient() {
     hasMore: false
   });
 
-  // API base URL - point to your FastAPI server
+  // API base URL
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+  // Initialize filters from URL params on component mount
+  useEffect(() => {
+    const newFilters: FilterState = {
+      q: searchParams.get('q') || '',
+      brands: searchParams.get('brands')?.split(',').filter(Boolean) || [],
+      sizes: searchParams.get('sizes')?.split(',').filter(Boolean) || [],
+      conditions: searchParams.get('conditions')?.split(',').filter(Boolean) || [],
+      marketplaces: searchParams.get('marketplaces')?.split(',').filter(Boolean) || [],
+      priceMin: searchParams.get('priceMin') || '',
+      priceMax: searchParams.get('priceMax') || '',
+      sort: (searchParams.get('sort') as FilterState['sort']) || 'best'
+    };
+    
+    setCurrentFilters(newFilters);
+    
+    // Perform initial search if there are search parameters
+    if (newFilters.q || newFilters.brands.length > 0 || newFilters.priceMax) {
+      performSearch(newFilters);
+    }
+  }, [searchParams]);
 
   const performSearch = async (filters: FilterState, page: number = 1) => {
     setLoading(true);
@@ -120,131 +139,98 @@ export default function SearchClient() {
     }
   };
 
-  // Handle filter changes
+  // Handle smart search from SearchBar
+  const handleSmartSearch = (searchFilters: any) => {
+    const newFilters: FilterState = {
+      q: searchFilters.q || "",
+      brands: searchFilters.brands || [],
+      sizes: searchFilters.sizes || [],
+      conditions: searchFilters.conditions || [],
+      marketplaces: searchFilters.marketplaces || [],
+      priceMin: searchFilters.priceMin?.toString() || "",
+      priceMax: searchFilters.priceMax?.toString() || "",
+      sort: searchFilters.sort || "best"
+    };
+    
+    setCurrentFilters(newFilters);
+    performSearch(newFilters);
+  };
+
+  // Handle filter changes from Filters component
   const handleFiltersChange = (filters: FilterState) => {
     setCurrentFilters(filters);
     performSearch(filters);
   };
 
-  // Handle item clicks (redirect through your API for tracking)
+  // Handle item clicks
   const handleItemClick = (item: Item) => {
-    // Open in new tab via your click tracking endpoint
     window.open(`${API_BASE}/click?id=${item.id}`, '_blank');
   };
 
-  // Load more items (pagination) - prevents duplicates
-  const loadMore = async () => {
-    if (searchStats.hasMore && !loading) {
-      const nextPage = searchStats.page + 1;
-      
-      setLoading(true);
-      
-      try {
-        // Prepare the request body for next page
-        const searchBody = {
-          q: currentFilters.q.trim(),
-          brands: currentFilters.brands,
-          sizes: currentFilters.sizes,
-          conditions: currentFilters.conditions,
-          marketplaces: currentFilters.marketplaces,
-          price_min: currentFilters.priceMin ? parseFloat(currentFilters.priceMin) : undefined,
-          price_max: currentFilters.priceMax ? parseFloat(currentFilters.priceMax) : undefined,
-          sort: currentFilters.sort,
-          page: nextPage,
-          per_page: 24
-        };
-
-        // Remove undefined values
-        const cleanBody = Object.fromEntries(
-          Object.entries(searchBody).filter(([_, value]) => 
-            value !== undefined && value !== "" && 
-            !(Array.isArray(value) && value.length === 0)
-          )
-        );
-
-        const response = await fetch(`${API_BASE}/search`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(cleanBody)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Load more failed: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        // Get existing item IDs to prevent duplicates
-        const existingIds = new Set(items.map(item => item.id));
-        const newItems = (data.items || []).filter(item => !existingIds.has(item.id));
-        
-        // Append new items without duplicates
-        setItems(prevItems => [...prevItems, ...newItems]);
-        setSearchStats({
-          total: data.total || 0,
-          page: data.page || nextPage,
-          totalPages: data.total_pages || 0,
-          hasMore: data.has_more || false
-        });
-        
-      } catch (err) {
-        console.error('Load more error:', err);
-        setError(err instanceof Error ? err.message : "Failed to load more items");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
   // Format price display
   const formatPrice = (priceCents: number | null) => {
     if (priceCents === null) return "Price not available";
     return `$${(priceCents / 100).toFixed(2)}`;
   };
 
-  // Handle save search success
-  function handleSaveSuccess() {
-    setToastMessage("Search saved! You'll be notified of new matches.");
-    setShowToast(true);
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Filters Component */}
-      <Filters onFiltersChange={handleFiltersChange} loading={loading} />
-      
+      {/* Smart Search Header */}
+      <div className="bg-white border-b border-gray-200 py-6">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">WebCloset</h1>
+            <p className="text-gray-600">Search fashion items with natural language</p>
+          </div>
+          
+          {/* Smart Search Bar */}
+          <SmartSearchBar onSearch={handleSmartSearch} />
+          
+          {/* Search Results Summary */}
+          {!loading && items.length > 0 && (
+            <div className="mt-4 text-center">
+              <span className="text-sm text-gray-600">
+                Found {searchStats.total.toLocaleString()} items
+                {currentFilters.q && ` for "${currentFilters.q}"`}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Filters (if needed) */}
+      {(currentFilters.brands.length > 0 || currentFilters.sizes.length > 0 || currentFilters.priceMax) && (
+        <div className="bg-blue-50 border-b border-blue-200 py-3">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex flex-wrap gap-2">
+              {currentFilters.brands.map(brand => (
+                <span key={brand} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  Brand: {brand}
+                </span>
+              ))}
+              {currentFilters.sizes.map(size => (
+                <span key={size} className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                  Size: {size}
+                </span>
+              ))}
+              {currentFilters.conditions.map(condition => (
+                <span key={condition} className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                  Condition: {condition}
+                </span>
+              ))}
+              {currentFilters.priceMax && (
+                <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                  Under ${currentFilters.priceMax}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         
-        {/* Search Results Header */}
-        {!loading && (
-          <div className="mb-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {currentFilters.q ? `Search results for "${currentFilters.q}"` : 'All Items'}
-              </h1>
-              <div className="flex items-center gap-4">
-                {currentFilters.q && (
-                  <button
-                    onClick={() => setShowSaveModal(true)}
-                    className="px-4 py-2 text-sm border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
-                  >
-                    Save Search
-                  </button>
-                )}
-                <span className="text-sm text-gray-600">
-                  {searchStats.total.toLocaleString()} items found
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Error Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -264,16 +250,44 @@ export default function SearchClient() {
           <div className="flex justify-center items-center py-12">
             <div className="text-center">
               <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <div className="text-gray-600">Searching...</div>
+              <div className="text-gray-600">Searching with AI...</div>
             </div>
           </div>
         )}
 
         {/* No Results */}
-        {!loading && items.length === 0 && !error && (
+        {!loading && items.length === 0 && !error && (currentFilters.q || currentFilters.brands.length > 0 || currentFilters.priceMax) && (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg mb-2">No items found</div>
-            <div className="text-gray-400 text-sm">Try adjusting your search or filters</div>
+            <div className="text-gray-400 text-sm">Try a different search or adjust your criteria</div>
+            <div className="mt-4">
+              <SmartSearchBar onSearch={handleSmartSearch} showExamples={false} />
+            </div>
+          </div>
+        )}
+
+        {/* Welcome State (no search yet) */}
+        {!loading && items.length === 0 && !error && !currentFilters.q && currentFilters.brands.length === 0 && !currentFilters.priceMax && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-4">Start your search with natural language</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              {[
+                "nike shoes under $50",
+                "large supreme hoodie",
+                "used designer bags",
+                "size 10 jordan sneakers",
+                "vintage t-shirts",
+                "medium adidas jacket"
+              ].map(example => (
+                <button
+                  key={example}
+                  onClick={() => handleSmartSearch({ q: example, brands: [], sizes: [], conditions: [], marketplaces: [], sort: 'best', page: 1, perPage: 24 })}
+                  className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="text-sm text-gray-600">"{example}"</div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -339,18 +353,6 @@ export default function SearchClient() {
           </div>
         )}
 
-        {/* Load More Button */}
-        {searchStats.hasMore && !loading && (
-          <div className="text-center mt-8">
-            <button
-              onClick={loadMore}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Load More Items
-            </button>
-          </div>
-        )}
-
         {/* Pagination Info */}
         {items.length > 0 && (
           <div className="text-center mt-6 text-sm text-gray-600">
@@ -361,20 +363,6 @@ export default function SearchClient() {
           </div>
         )}
       </div>
-
-      <SaveSearchModal
-        isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        searchQuery={currentFilters.q}
-        onSuccess={handleSaveSuccess}
-      />
-
-      <Toast
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-        type="success"
-      />
     </div>
   );
 }
